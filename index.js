@@ -17,10 +17,6 @@ const server = http.createServer(app);
 const pineconeClient = new PineconeClient();
 
 // Initialize the Pinecone client
-await pineconeClient.init({
-  apiKey: process.env.PINECONE_API_KEY,
-  environment: process.env.PINECONE_ENVIRONMENT,
-});
 
 const index = pineconeClient.Index("room");
 
@@ -132,4 +128,14 @@ app.post("/api/image", async (req, res) => {
 });
 const port = 8080;
 // Start the HTTP server
-server.listen(port, () => console.log(`Listening on port ${port}`));
+
+async function main() {
+  await pineconeClient.init({
+    apiKey: process.env.PINECONE_API_KEY,
+    environment: process.env.PINECONE_ENVIRONMENT,
+  });
+
+  server.listen(port, () => console.log(`Listening on port ${port}`));
+}
+
+main();
