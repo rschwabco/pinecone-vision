@@ -106,31 +106,31 @@ app.get("/health", async (req, res) => {
   res.send("ok");
 });
 
-app.post("/image", async (req, res) => {
-  const data = req.body;
-  const { data: imageData, width, height, uri, label, stage } = data;
-  const imgBuffer = Buffer.from(imageData, "base64");
-  console.log(Buffer.byteLength(imgBuffer));
+// app.post("/image", async (req, res) => {
+//   const data = req.body;
+//   const { data: imageData, width, height, uri, label, stage } = data;
+//   const imgBuffer = Buffer.from(imageData, "base64");
+//   console.log(Buffer.byteLength(imgBuffer));
 
-  const imageName = `${label}-${crypto
-    .createHash("md5")
-    .update(uri)
-    .digest("hex")}`;
+//   const imageName = `${label}-${crypto
+//     .createHash("md5")
+//     .update(uri)
+//     .digest("hex")}`;
 
-  const embeddings = await getEmbeddings(imageData, ["room"]);
+//   const embeddings = await getEmbeddings(imageData, ["room"]);
 
-  const result = await handleEmbedding({
-    id: imageName,
-    embeddings,
-    text: ["room"],
-    label,
-    stage,
-  });
+//   const result = await handleEmbedding({
+//     id: imageName,
+//     embeddings,
+//     text: ["room"],
+//     label,
+//     stage,
+//   });
 
-  res.json({
-    label: result,
-  });
-});
+//   res.json({
+//     label: result,
+//   });
+// });
 const port = 8080;
 // Start the HTTP server
 server.listen(port, () => console.log(`Listening on port ${port}`));
