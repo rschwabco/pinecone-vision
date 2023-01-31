@@ -18,8 +18,6 @@ const pineconeClient = new PineconeClient();
 
 // Initialize the Pinecone client
 
-const index = pineconeClient.Index("room");
-
 const getEmbeddings = async (imageBase64, words) => {
   const data = {
     inputs: {
@@ -45,6 +43,7 @@ const getEmbeddings = async (imageBase64, words) => {
 };
 
 const saveEmbedding = async ({ id, values, metadata }) => {
+  const index = pineconeClient.Index("room");
   const upsertRequest = {
     vectors: [
       {
@@ -63,6 +62,7 @@ const saveEmbedding = async ({ id, values, metadata }) => {
 };
 
 const queryEmbedding = async ({ values }) => {
+  const index = pineconeClient.Index("room");
   const queryRequest = {
     topK: 1,
     vector: values,
