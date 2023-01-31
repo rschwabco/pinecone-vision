@@ -5,19 +5,16 @@ import crypto from "crypto";
 import * as dotenv from "dotenv";
 import { PineconeClient } from "@pinecone-database/pinecone";
 import Ably from "ably";
+import bodyParser from "body-parser";
 dotenv.config();
 
 const inferenceEndpointUrl = process.env.INFERENCE_ENDPOINT;
 const inferenceEndpointToken = process.env.INFERENCE_ENDPOINT_TOKEN;
-const ably = new Ably.Realtime.Promise(process.env.ABLY_KEY);
-
-await ably.connection.once("connected");
-console.log("Connected to Ably!");
-const channel = ably.channels.get("images");
 
 const app = express();
-const server = http.createServer(app);
+app.use(bodyParser.json());
 
+const server = http.createServer(app);
 const pineconeClient = new PineconeClient();
 
 // Initialize the Pinecone client
@@ -64,6 +61,7 @@ const saveEmbedding = async ({ id, values, metadata }) => {
   };
   try {
     const response = await index.upsert(upsertRequest);
+    return response;
   } catch (e) {
     console.log("failed", e.response.data);
   }
@@ -79,7 +77,8 @@ const queryEmbedding = async ({ values }) => {
     const response = await index.query(queryRequest);
     // console.log(response.data.matches[0].metadata);
     const metadata = response.data?.matches[0]?.metadata;
-    channel.publish("detectedLabel", metadata?.label || "unknown");
+    // channel.publish("detectedLabel", metadata?.label || "unknown");
+    return metadata?.label || "unknown";
   } catch (e) {
     console.log("failed", e.response.data);
   }
@@ -90,20 +89,25 @@ const handleEmbedding = async (data) => {
 
   if (stage === "training") {
     console.log("training...");
-    await saveEmbedding({
+    return await saveEmbedding({
       id,
       values: embeddings,
       metadata: { keywords: text, label },
     });
   } else if (stage === "querying") {
     console.log("querying...");
-    await queryEmbedding({
+    return await queryEmbedding({
       values: embeddings,
     });
   }
 };
 
-await channel.subscribe("image", async ({ data }) => {
+app.get("/health", async (req, res) => {
+  res.send("ok");
+});
+
+app.post("/image", async (req, res) => {
+  const data = req.body;
   const { data: imageData, width, height, uri, label, stage } = data;
   const imgBuffer = Buffer.from(imageData, "base64");
   console.log(Buffer.byteLength(imgBuffer));
@@ -115,17 +119,17 @@ await channel.subscribe("image", async ({ data }) => {
 
   const embeddings = await getEmbeddings(imageData, ["room"]);
 
-  await handleEmbedding({
+  const result = await handleEmbedding({
     id: imageName,
     embeddings,
     text: ["room"],
     label,
     stage,
   });
-});
 
-app.get("/health", (req, res) => {
-  res.send("ok");
+  res.json({
+    label: result,
+  });
 });
 const port = 8080;
 // Start the HTTP server
