@@ -15,9 +15,9 @@ app.use(bodyParser.json());
 
 const server = http.createServer(app);
 const pineconeClient = new PineconeClient();
+const indexName = "vision";
 
 // Initialize the Pinecone client
-
 const getEmbeddings = async (imageBase64, words) => {
   const data = {
     inputs: {
@@ -42,8 +42,8 @@ const getEmbeddings = async (imageBase64, words) => {
   }
 };
 
-const saveEmbedding = async ({ id, values, metadata }) => {
-  const index = pineconeClient.Index("room");
+const saveEmbedding = async ({ id, values, metadata, namespace }) => {
+  const index = pineconeClient.Index(indexName);
   const upsertRequest = {
     vectors: [
       {
@@ -52,47 +52,53 @@ const saveEmbedding = async ({ id, values, metadata }) => {
         metadata,
       },
     ],
+    namespace,
   };
   try {
     const response = await index.upsert(upsertRequest);
-    return response;
+    return response?.data;
   } catch (e) {
     console.log("failed", e.response.data);
   }
 };
 
-const queryEmbedding = async ({ values }) => {
-  const index = pineconeClient.Index("room");
+const queryEmbedding = async ({ values, namespace }) => {
+  const index = pineconeClient.Index(indexName);
   const queryRequest = {
     topK: 1,
     vector: values,
     includeMetadata: true,
+    namespace,
   };
   try {
     const response = await index.query(queryRequest);
-    // console.log(response.data.matches[0].metadata);
+    console.log(response.data);
     const metadata = response.data?.matches[0]?.metadata;
-    // channel.publish("detectedLabel", metadata?.label || "unknown");
     return metadata?.label || "unknown";
   } catch (e) {
     console.log("failed", e.response.data);
   }
 };
 
-const handleEmbedding = async (data) => {
-  const { id, embeddings, text, label, stage } = data;
-
+const handleEmbedding = async ({
+  id,
+  embeddings,
+  text,
+  label,
+  stage,
+  user,
+}) => {
   if (stage === "training") {
-    console.log("training...");
     return await saveEmbedding({
       id,
       values: embeddings,
+      namespace: user,
       metadata: { keywords: text, label },
     });
   } else if (stage === "querying") {
-    console.log("querying...");
     return await queryEmbedding({
       values: embeddings,
+      namespace: user,
     });
   }
 };
@@ -103,32 +109,42 @@ app.get("/api/health", async (req, res) => {
 
 app.post("/api/image", async (req, res) => {
   const data = req.body;
-  const { data: imageData, width, height, uri, label, stage } = data;
-  const imgBuffer = Buffer.from(imageData, "base64");
-  console.log(Buffer.byteLength(imgBuffer));
+  const { data: imageData, uri, label, stage, user } = data;
+  const text = ["room"];
 
   const imageName = `${label}-${crypto
     .createHash("md5")
     .update(uri)
     .digest("hex")}`;
 
-  const embeddings = await getEmbeddings(imageData, ["room"]);
-
-  const result = await handleEmbedding({
-    id: imageName,
-    embeddings,
-    text: ["room"],
-    label,
-    stage,
-  });
-
-  res.json({
-    label: result,
-  });
+  const userHash = crypto.createHash("md5").update(user).digest("hex");
+  console.log(userHash);
+  try {
+    const embeddings = await getEmbeddings(imageData, text);
+    const result = await handleEmbedding({
+      id: imageName,
+      embeddings,
+      text,
+      label,
+      stage,
+      user: userHash,
+    });
+    if (stage === "querying") {
+      res.json({
+        label: result,
+      });
+    } else {
+      res.json({
+        message: "training",
+      });
+    }
+  } catch (e) {
+    console.log("Failed handling embedding", e);
+  }
 });
+
 const port = 8080;
 // Start the HTTP server
-
 async function main() {
   await pineconeClient.init({
     apiKey: process.env.PINECONE_API_KEY,
