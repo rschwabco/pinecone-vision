@@ -73,8 +73,13 @@ const queryEmbedding = async ({ values, namespace }) => {
   try {
     const response = await index.query(queryRequest);
     console.log(response.data);
-    const metadata = response.data?.matches[0]?.metadata;
-    return metadata?.label || "unknown";
+    const match = response.data?.matches[0];
+    const metadata = match?.metadata;
+    const score = match?.score;
+    return {
+      label: metadata?.label || "unknown",
+      confidence: score,
+    };
   } catch (e) {
     console.log("failed", e.response.data);
   }
@@ -130,9 +135,7 @@ app.post("/api/image", async (req, res) => {
       user: userHash,
     });
     if (stage === "querying") {
-      res.json({
-        label: result,
-      });
+      res.json(result);
     } else {
       res.json({
         message: "training",
