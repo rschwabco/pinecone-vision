@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { saveEmbedding, queryEmbedding } from "./pinecone";
-import { getEmbeddings } from "./huggingFace";
+import { saveEmbedding, queryEmbedding } from "./pinecone.js";
+import { getEmbeddings } from "./huggingFace.js";
 
 const md5 = (str) => crypto.createHash("md5").update(str).digest("hex");
 

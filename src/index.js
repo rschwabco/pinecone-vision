@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import express from "express";
 import http from "http";
 import bodyParser from "body-parser";
-import handler from "./handler";
+import handler from "./handler.js";
 
 dotenv.config();
 const port = process.env.PORT;
