@@ -24,7 +24,6 @@ const saveEmbedding = async ({ id, values, metadata, namespace }) => {
   };
   try {
     const response = await index.upsert(upsertRequest);
-    console.log("response", response);
     return response?.data?.upsertedCount > 0
       ? {
           message: "training",
@@ -47,12 +46,11 @@ const queryEmbedding = async ({ values, namespace }) => {
   };
   try {
     const response = await index.query(queryRequest);
-    console.log(response.data);
     const match = response.data?.matches[0];
     const metadata = match?.metadata;
     const score = match?.score;
     return {
-      label: metadata?.label || "unknown",
+      label: metadata?.label || "Unknown",
       confidence: score,
     };
   } catch (e) {

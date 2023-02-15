@@ -8,9 +8,10 @@ const getEmbeddings = async (imageBase64, words) => {
   const data = {
     inputs: {
       image: imageBase64,
-      words,
+      words: words.length > 0 ? words : ["default"],
     },
   };
+
   try {
     const response = await fetch(inferenceEndpointUrl, {
       method: "POST",
@@ -24,7 +25,7 @@ const getEmbeddings = async (imageBase64, words) => {
     const json = await response.json();
     return json.embeddings;
   } catch (e) {
-    console.log(e);
+    console.log("Failed to get embeddings", e);
   }
 };
 

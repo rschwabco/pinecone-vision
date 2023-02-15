@@ -30,12 +30,13 @@ const handleEmbedding = async ({
 
 const handler = async (req, res) => {
   const data = req.body;
+
   const { data: imageData, uri, label, stage, user } = data;
   const id = `${label}-${md5(uri)}`;
   const userHash = md5(user);
-
+  const text = "default";
   try {
-    const embeddings = await getEmbeddings(imageData, [label]);
+    const embeddings = await getEmbeddings(imageData, [text]);
     const result = await handleEmbedding({
       id,
       embeddings,
@@ -50,6 +51,6 @@ const handler = async (req, res) => {
     console.log(message, e);
     res.status(500).json({ message });
   }
-}
+};
 
-export default handler
+export default handler;
