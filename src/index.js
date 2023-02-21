@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import express from "express";
 import http from "http";
 import bodyParser from "body-parser";
-import { image, deleteUser } from "./handlers.js";
+import { handleImage, handleDeleteUser } from "./handlers.js";
 
 dotenv.config();
 const port = process.env.PORT;
@@ -16,9 +16,9 @@ app.get("/api/health", async (_, res) => {
   res.send("ok");
 });
 
-app.post("/api/image", image);
+app.post("/api/image", handleImage);
 
-app.delete("/api/user", deleteUser);
+app.delete("/api/user", handleDeleteUser);
 
 // Start the HTTP server
 server.listen(port, () => console.log(`Listening on port ${port}`));

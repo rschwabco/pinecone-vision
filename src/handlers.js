@@ -28,7 +28,7 @@ const handleEmbedding = async ({
   }
 };
 
-const image = async (req, res) => {
+const handleImage = async (req, res) => {
   const data = req.body;
 
   const { data: imageData, uri, label, stage, user } = data;
@@ -53,7 +53,7 @@ const image = async (req, res) => {
   }
 };
 
-const deleteUser = async (req, res) => {
+const handleDeleteUser = async (req, res) => {
   const { user } = req.query;
 
   if (!user) {
@@ -70,4 +70,4 @@ const deleteUser = async (req, res) => {
   });
 };
 
-export { image, deleteUser };
+export { handleImage, handleDeleteUser };
