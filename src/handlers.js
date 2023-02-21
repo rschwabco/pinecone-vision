@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { saveEmbedding, queryEmbedding } from "./pinecone.js";
+import { saveEmbedding, queryEmbedding, deleteNamespace } from "./pinecone.js";
 import { getEmbeddings } from "./huggingFace.js";
 
 const md5 = (str) => crypto.createHash("md5").update(str).digest("hex");
@@ -28,7 +28,7 @@ const handleEmbedding = async ({
   }
 };
 
-const handler = async (req, res) => {
+const image = async (req, res) => {
   const data = req.body;
 
   const { data: imageData, uri, label, stage, user } = data;
@@ -53,4 +53,21 @@ const handler = async (req, res) => {
   }
 };
 
-export default handler;
+const deleteUser = async (req, res) => {
+  const { user } = req.query;
+
+  if (!user) {
+    res.status(400).json({
+      message: "missing user",
+    });
+    return;
+  }
+  const hashedUser = md5(user);
+
+  await deleteNamespace({ namespace: hashedUser });
+  res.json({
+    message: "success",
+  });
+};
+
+export { image, deleteUser };

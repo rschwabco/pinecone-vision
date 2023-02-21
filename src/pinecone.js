@@ -58,4 +58,13 @@ const queryEmbedding = async ({ values, namespace }) => {
   }
 };
 
-export { saveEmbedding, queryEmbedding };
+const deleteNamespace = async ({ namespace }) => {
+  const index = pineconeClient.Index(indexName);
+  try {
+    await index.delete1([], true, namespace);
+  } catch (e) {
+    console.log("failed", e.response.data);
+  }
+};
+
+export { saveEmbedding, queryEmbedding, deleteNamespace };
